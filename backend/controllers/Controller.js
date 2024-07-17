@@ -19,11 +19,11 @@ const consumerContract = new ethers.Contract(CONSUMER_CONTRACT_ADDRESS, CONSUMER
 // const pills = {}; // to save PillBook in the memory 
 
 exports.createPill = async (req, res) => {
-  const { login, manufacturer, SKU, quantity, productionDate } = req.body;
+  const { manufacturer, SKU, quantity, productionDate } = req.body;
 
   try {
 
-    console.log(`Received request to create pills: login=${login}, manufacturer=${manufacturer}, SKU=${SKU}, quantity=${quantity}, productionDate=${productionDate}`);
+    console.log(`Received request to create pills: manufacturer=${manufacturer}, SKU=${SKU}, quantity=${quantity}, productionDate=${productionDate}`);
     const secrets = [];
     const transactionHashes = [];
 
@@ -50,7 +50,6 @@ exports.createPill = async (req, res) => {
         secret,
         transactionHash,
         status: 0,
-        login//: login || 'default_login'
       });
 
       secrets.push(secret);
@@ -102,12 +101,4 @@ exports.scanPill = async (req, res) => {
       console.error('Error scanning pill:', error);
       res.status(500).send({ message: `Error scanning pill: ${error.message}` });
   }
-};
-
-exports.login = async (req, res) => {
-  res.status(501).send({ message: 'Not Implemented' });
-};
-
-exports.register = async (req, res) => {
-  res.status(501).send({ message: 'Not Implemented' });
 };

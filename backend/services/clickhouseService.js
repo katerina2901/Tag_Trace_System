@@ -12,10 +12,10 @@ const clickhouse = new ClickHouse({
   format: "json",
 });
 
-exports.insertPill = async ({ manufacturer, SKU, productionDate, secret, transactionHash, status, login}) => {
+exports.insertPill = async ({ manufacturer, SKU, productionDate, secret, transactionHash, status}) => {
   const query = `
-    INSERT INTO tag_trace.transactions (manufacturer, SKU, productionDate, secret, transactionHash, status, login)
-    VALUES ('${manufacturer}', '${SKU}', '${productionDate}', '${secret}', '${transactionHash}', ${status}, '${login}')
+    INSERT INTO tag_trace.transactions (manufacturer, SKU, productionDate, secret, transactionHash, status)
+    VALUES ('${manufacturer}', '${SKU}', '${productionDate}', '${secret}', '${transactionHash}', '${status}')
   `;
   return new Promise((resolve, reject) => {
     clickhouse.query(query, (err, result) => {

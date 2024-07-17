@@ -20,18 +20,29 @@ function ConsumerPage() {
   }, []);
 
   const handleScan = (data) => {
-    console.log("Scan data:", data); 
-
-    if (data && data.text) {
-      const scannedSecret = data.text.split('/').pop(); 
-      console.log("Scanned secret:", scannedSecret);
-      navigate(`/consumer/${scannedSecret}`);
+    if (data) {
+      console.log("Scan data:", data);
+      const url = data.text;
+      console.log("Scanned URL:", url);
+      
+      if (url.startsWith('http://localhost:3000/consumer/')) {
+        const scannedSecret = url.split('/').pop();
+        console.log("Scanned secret:", scannedSecret);
+        navigate(`http://localhost:3000/consumer/consumer/${scannedSecret}`);
+      } else {
+        setError('Invalid QR code format.');
+      }
     }
   };
 
   const handleError = (err) => {
     setError('Error scanning QR code. Please try again.');
     console.error(err);
+  };
+
+  const previewStyle = {
+    height: 240,
+    width: 320,
   };
 
   return (
@@ -43,8 +54,9 @@ function ConsumerPage() {
             delay={300}
             onError={handleError}
             onScan={handleScan}
-            style={{ width: '100%' }}
+            style={previewStyle}
           />
+          {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
       ) : (
         <p style={{ color: 'red' }}>{error || 'Waiting for camera permission...'}</p>

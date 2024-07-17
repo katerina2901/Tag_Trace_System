@@ -9,7 +9,7 @@ function PillInfoPage() {
 
   const fetchPillInfo = async (secret) => {
     try {
-      const response = await axios.get(`/api/pills/${secret}`);
+      const response = await axios.get(`http://localhost:3001/api/pills/${secret}`);
       setPillInfo(response.data);
       setError('');
     } catch (err) {
