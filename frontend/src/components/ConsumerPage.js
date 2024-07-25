@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QrScanner from 'react-qr-scanner';
+//import axios from 'axios';
 
 function ConsumerPage() {
   const navigate = useNavigate();
@@ -19,18 +20,18 @@ function ConsumerPage() {
       });
   }, []);
 
-  const handleScan = (data) => {
+  const handleScan = async (data) => {
     if (data) {
-      console.log("Scan data:", data);
       const url = data.text;
-      console.log("Scanned URL:", url);
-      
-      if (url.startsWith('http://localhost:3000/consumer/')) {
-        const scannedSecret = url.split('/').pop();
-        console.log("Scanned secret:", scannedSecret);
-        navigate(`http://localhost:3000/consumer/consumer/${scannedSecret}`);
+      const secret = url.split('/').pop();
+      console.log('Scanned URL:', url);
+      console.log('Extracted Secret:', secret);
+
+      // Перенаправление на страницу информации о таблетке с секретом
+      if (secret) {
+        navigate(`/consumer/${secret}`);
       } else {
-        setError('Invalid QR code format.');
+        setError('Invalid QR code scanned. Please try again.');
       }
     }
   };
@@ -40,10 +41,6 @@ function ConsumerPage() {
     console.error(err);
   };
 
-  const previewStyle = {
-    height: 240,
-    width: 320,
-  };
 
   return (
     <div>
@@ -54,7 +51,7 @@ function ConsumerPage() {
             delay={300}
             onError={handleError}
             onScan={handleScan}
-            style={previewStyle}
+            style={{ width: '300px', height: '300px' }}
           />
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>

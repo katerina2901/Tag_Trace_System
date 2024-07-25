@@ -1,48 +1,29 @@
-const { ethers, JsonRpcProvider } = require('ethers');
 const clickhouseService = require('../services/clickhouseService');
-
-const MANUFACTURER_ABI = require('../../artifacts/contracts/Manufacturer.sol/Manufacturer.json').abi;
-const MANUFACTURER_CONTRACT_ADDRESS = process.env.MANUFACTURER_CONTRACT_ADDRESS;
-
-const CONSUMER_ABI = require('../../artifacts/contracts/Consumer.sol/Consumer.json').abi;
-const CONSUMER_CONTRACT_ADDRESS = process.env.CONSUMER_CONTRACT_ADDRESS;
-
-const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`);
-const manufacturerPrivateKey = process.env.MANUFACTURER_PRIVATE_KEY;
-const consumerPrivateKey = process.env.CONSUMER_PRIVATE_KEY;
-const signer = new ethers.Wallet(manufacturerPrivateKey, provider); // manufacturer
-const consumerWallet = new ethers.Wallet(consumerPrivateKey, provider);
-
-const manufacturerContract = new ethers.Contract(MANUFACTURER_CONTRACT_ADDRESS, MANUFACTURER_ABI, signer);
-const consumerContract = new ethers.Contract(CONSUMER_CONTRACT_ADDRESS, CONSUMER_ABI, consumerWallet);
-
-// const pills = {}; // to save PillBook in the memory 
+const { manufacturerContract, consumerContract } = require('../services/blockchainService');
+const { BigNumber } = require('ethers');
 
 exports.createPill = async (req, res) => {
   const { manufacturer, SKU, quantity, productionDate } = req.body;
 
   try {
-
+    
     console.log(`Received request to create pills: manufacturer=${manufacturer}, SKU=${SKU}, quantity=${quantity}, productionDate=${productionDate}`);
     const secrets = [];
     const transactionHashes = [];
 
     for (let i = 0; i < quantity; i++) {
-      const currentTimestamp = Math.floor(Date.now()); // Get the current timestamp in milliseconds
-      
+      const currentTimestamp = Math.floor(Date.now() / 1000);
       const productionSequence = await manufacturerContract.productionSequence();
       console.log(`Production sequence: ${productionSequence}`);
 
-      const tx = await manufacturerContract.createPills(SKU, currentTimestamp);
-      const receipt = await tx.wait();
+      const tx = await manufacturerContract.createPills(productionSequence, SKU, currentTimestamp);
+      await tx.wait();
 
       const secret = await manufacturerContract.getSecret(productionSequence, SKU, currentTimestamp);
       const transactionHash = tx.hash;
 
       console.log(`Pill with SKU: ${SKU} created. Secret: ${secret}. Transaction hash: ${tx.hash}`);
-      //await manufacturerContract.createPills(SKU);
-    
- 
+
       await clickhouseService.insertPill({
         manufacturer,
         SKU,
@@ -56,29 +37,43 @@ exports.createPill = async (req, res) => {
       transactionHashes.push(transactionHash);
     }
 
-    res.send({ message: `Created ${quantity} pills with SKU ${SKU}` , secrets, transactionHashes });
+    res.send({ message: `Created ${quantity} pills with SKU ${SKU}`, secrets, transactionHashes });
   } catch (error) {
     console.error('Error creating pills:', error);
     res.status(500).send({ message: `Error creating pills: ${error.message}` });
   }
 };
 
-
 exports.getPillInfo = async (req, res) => {
   const { secret } = req.params;
 
-  // console.log(`Received request to fetch pill info for secret: ${secret}`);
-  
-  try {
-    const pillInfo = await clickhouseService.getPillInfo(secret);
+  if (!secret) {
+    console.error('Secret parameter is missing');
+    return res.status(400).send({ message: 'Secret parameter is required' });
+  }
 
-    if (!pillInfo) {
-      // console.log(`Pill not found for secret: ${secret}`);
-      return res.status(404).send({ message: 'Pill not found' });
+  try {
+    const clickhouseInfo = await clickhouseService.getPillInfo(secret);
+    const pillInfo = await manufacturerContract.viewPillInfo(secret);
+    const productionDate = BigNumber.from(pillInfo[3]).toNumber();
+
+    if (!clickhouseInfo) {
+      return res.status(404).send({ message: 'Pill not found in ClickHouse' });
     }
 
-    console.log('Pill info:', JSON.stringify(pillInfo, null, 2));
-    res.json(pillInfo);
+    const formattedPillInfo = {
+      secret: pillInfo[0],
+      status: pillInfo[1],
+      consumedBy: pillInfo[2],
+      productionDate: productionDate,
+      blockchainManufacturer: pillInfo[4],
+      clickhouseManufacturer: clickhouseInfo.manufacturer
+    };
+
+    console.log('Blockchain Pill Info:', pillInfo);
+    console.log('ClickHouse Manufacturer Info:', clickhouseInfo);
+
+    res.json(formattedPillInfo);
 
   } catch (error) {
     console.error('Error fetching pill info:', error);
@@ -86,19 +81,35 @@ exports.getPillInfo = async (req, res) => {
   }
 };
 
-
 exports.scanPill = async (req, res) => {
-  const { secret } = req.body;
+  const { secret, productionSequence, sku, timestamp } = req.body;
+
+  if (!secret || !productionSequence || !sku || !timestamp) {
+    return res.status(400).send({ message: 'Missing required parameters' });
+  }
 
   try {
-      const tx = await consumerContract.consumePill(secret);
-      const receipt = await tx.wait();
+    // console.log('Calling consumePill on consumer contract');
+    const tx = await consumerContract.consumePill(productionSequence, sku, timestamp);
+    await tx.wait();
 
-      console.log(`Pill with secret: ${secret} scanned. Transaction hash: ${tx.hash}`);
+    console.log(`Transaction successful: ${tx.hash}`);
 
-      res.send({ message: `Pill with secret ${secret} scanned successfully`, transactionHash: tx.hash });
+    const pillInfo = await manufacturerContract.viewPillInfo(secret);
+    console.log('Pill status from blockchain:', pillInfo);
+
+    console.log('Updating status in ClickHouse');
+    await clickhouseService.updatePillStatus(secret, 1);
+
+    console.log('Logging QR scan in ClickHouse');
+    await clickhouseService.logQrScan({
+      secret,
+      scanTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      status: 1
+    });
+    res.send({ message: `Pill with secret ${secret} scanned successfully`, transactionHash: tx.hash });
   } catch (error) {
-      console.error('Error scanning pill:', error);
-      res.status(500).send({ message: `Error scanning pill: ${error.message}` });
+    console.error('Error scanning pill:', error);
+    res.status(500).send({ message: `Error scanning pill: ${error.message}` });
   }
 };

@@ -64,11 +64,13 @@ function ManufacturerPage() {
       {message && <p>{message}</p>}
       <div>
         {qrCodes.map((secret, index) => (
-          <QRCodeComponent key={index} secret={secret} />
+          <div key={index}>
+            <QRCodeComponent secret={secret} />
+            <p>{`http://localhost:3000/consumer/${secret}`}</p>
+          </div>
         ))}
       </div>
     </div>
   );
-};
-
+}
 export default ManufacturerPage;

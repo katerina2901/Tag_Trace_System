@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/ubuntu/TagTrace/contracts/Consumer.sol": {
-      "lastModificationDate": 1720777743853,
-      "contentHash": "40ddd746c4288290fea2430405e902ff",
+      "lastModificationDate": 1721887676710,
+      "contentHash": "969974f75f4240af29d9c2f16c53c07d",
       "sourceName": "contracts/Consumer.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -40,8 +40,8 @@
       ]
     },
     "/home/ubuntu/TagTrace/contracts/Manufacturer.sol": {
-      "lastModificationDate": 1720777720267,
-      "contentHash": "950fbe2402d41753db502b639fd7e106",
+      "lastModificationDate": 1721887979842,
+      "contentHash": "1cc445633a33350a0b0f624f3e09273a",
       "sourceName": "contracts/Manufacturer.sol",
       "solcConfig": {
         "version": "0.8.24",
