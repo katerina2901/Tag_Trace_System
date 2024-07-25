@@ -13,13 +13,10 @@ exports.createPill = async (req, res) => {
 
     for (let i = 0; i < quantity; i++) {
       const currentTimestamp = Math.floor(Date.now() / 1000);
-      const productionSequence = await manufacturerContract.productionSequence();
-      console.log(`Production sequence: ${productionSequence}`);
-
-      const tx = await manufacturerContract.createPills(productionSequence, SKU, currentTimestamp);
+      const tx = await manufacturerContract.createPills(SKU, currentTimestamp);
       await tx.wait();
 
-      const secret = await manufacturerContract.getSecret(productionSequence, SKU, currentTimestamp);
+      const secret = await manufacturerContract.getSecret(SKU, currentTimestamp);
       const transactionHash = tx.hash;
 
       console.log(`Pill with SKU: ${SKU} created. Secret: ${secret}. Transaction hash: ${tx.hash}`);
@@ -56,7 +53,7 @@ exports.getPillInfo = async (req, res) => {
     const clickhouseInfo = await clickhouseService.getPillInfo(secret);
     const pillInfo = await manufacturerContract.viewPillInfo(secret);
     const productionDate = BigNumber.from(pillInfo[3]).toNumber();
-
+      
     if (!clickhouseInfo) {
       return res.status(404).send({ message: 'Pill not found in ClickHouse' });
     }
@@ -67,7 +64,8 @@ exports.getPillInfo = async (req, res) => {
       consumedBy: pillInfo[2],
       productionDate: productionDate,
       blockchainManufacturer: pillInfo[4],
-      clickhouseManufacturer: clickhouseInfo.manufacturer
+      clickhouseManufacturer: clickhouseInfo.manufacturer,
+      SKU: clickhouseInfo.SKU 
     };
 
     console.log('Blockchain Pill Info:', pillInfo);
@@ -82,15 +80,14 @@ exports.getPillInfo = async (req, res) => {
 };
 
 exports.scanPill = async (req, res) => {
-  const { secret, productionSequence, sku, timestamp } = req.body;
+  const { secret, sku, timestamp } = req.body;
 
-  if (!secret || !productionSequence || !sku || !timestamp) {
+  if (!secret ||!sku || !timestamp) {
     return res.status(400).send({ message: 'Missing required parameters' });
   }
 
   try {
-    // console.log('Calling consumePill on consumer contract');
-    const tx = await consumerContract.consumePill(productionSequence, sku, timestamp);
+    const tx = await consumerContract.consumePill(sku, timestamp);
     await tx.wait();
 
     console.log(`Transaction successful: ${tx.hash}`);
@@ -98,15 +95,14 @@ exports.scanPill = async (req, res) => {
     const pillInfo = await manufacturerContract.viewPillInfo(secret);
     console.log('Pill status from blockchain:', pillInfo);
 
-    console.log('Updating status in ClickHouse');
     await clickhouseService.updatePillStatus(secret, 1);
 
-    console.log('Logging QR scan in ClickHouse');
     await clickhouseService.logQrScan({
       secret,
       scanTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
       status: 1
     });
+
     res.send({ message: `Pill with secret ${secret} scanned successfully`, transactionHash: tx.hash });
   } catch (error) {
     console.error('Error scanning pill:', error);

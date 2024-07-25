@@ -15,10 +15,10 @@ contract Consumer {
 
     event EatPill(bytes32 indexed secret, uint256 timestamp, address consumer);
 
-    function consumePill(uint _productionSequence, string memory _sku, uint256 _timestamp) public payable {
+    function consumePill(string memory _sku, uint256 _timestamp) public payable {
 
         // Retrieve tablet information from the manufacturer's repository
-        bytes32 _secret = keccak256(abi.encodePacked(_productionSequence, _sku, _timestamp));
+        bytes32 _secret = keccak256(abi.encodePacked(_sku, _timestamp));
         // Retrieve tablet information from the manufacturer's repository
         (bytes32 secret, uint8 status, , , ) = manufacturer.viewPillInfo(_secret);
         // Check if the pill exists (secret must not be 0)
@@ -27,7 +27,7 @@ contract Consumer {
         require(status == 0, "Pill is not consumed");
         
         // Updates the status of the tablet to consumed
-        manufacturer.consumePill(_productionSequence, _sku, _timestamp, msg.sender);
+        manufacturer.consumePill(_sku, _timestamp, msg.sender);
         // Transfer of funds to the creator of the pill (manufacturer)
         pillCreator.transfer(msg.value);
 

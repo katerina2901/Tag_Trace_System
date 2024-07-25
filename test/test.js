@@ -10,7 +10,6 @@ describe("Manufacturer Contract", function () {
     Manufacturer = await ethers.getContractFactory("Manufacturer", owner);
     manufacturer = await Manufacturer.deploy("PharmaCompany");
     await manufacturer.waitForDeployment(); 
-    // console.log("Manufacturer deployment transaction:", manufacturer.deploymentTransaction());
   });
 
   it("Should deploy smart contract properly", async function () {
@@ -24,8 +23,8 @@ describe("Manufacturer Contract", function () {
 
   it("Pill creation is happening", async function () {
     const currentTimestamp = Math.floor(Date.now());
-    await manufacturer.createPills(1, "SKU123", currentTimestamp);
-    const secret = await manufacturer.getSecret(1, "SKU123", currentTimestamp);
+    await manufacturer.createPills("SKU123", currentTimestamp);
+    const secret = await manufacturer.getSecret("SKU123", currentTimestamp);
     const pillInfo = await manufacturer.viewPillInfo(secret);
     expect(pillInfo[0]).to.equal(secret);
     expect(pillInfo[1]).to.equal(0); // status
@@ -34,26 +33,26 @@ describe("Manufacturer Contract", function () {
 
   it("Secret is correctly generated during pill creation", async function () {
     const currentTimestamp = Math.floor(Date.now());
-    await manufacturer.createPills(1, "SKU123", currentTimestamp);
-    const secretFromContract = await manufacturer.getSecret(1, "SKU123", currentTimestamp);
-    const expectedSecret = ethers.solidityPackedKeccak256(["uint256", "string", "uint256"], [1, "SKU123", currentTimestamp]);
+    await manufacturer.createPills("SKU123", currentTimestamp);
+    const secretFromContract = await manufacturer.getSecret("SKU123", currentTimestamp);
+    const expectedSecret = ethers.solidityPackedKeccak256(["string", "uint256"], ["SKU123", currentTimestamp]);
     expect(secretFromContract).to.equal(expectedSecret);
   });
 
   it("Should set pill in transit", async function () {
     const currentTimestamp = Math.floor(Date.now());
-    await manufacturer.createPills(1, "SKU123", currentTimestamp);
-    const secret = await manufacturer.getSecret(1, "SKU123", currentTimestamp);
-    await manufacturer.setPillInTransit(1, "SKU123", currentTimestamp);
+    await manufacturer.createPills("SKU123", currentTimestamp);
+    const secret = await manufacturer.getSecret("SKU123", currentTimestamp);
+    await manufacturer.setPillInTransit("SKU123", currentTimestamp);
     const pillInfo = await manufacturer.viewPillInfo(secret);
     expect(pillInfo[1]).to.equal(2); //status
   });
 
   it("Should consume pill", async function () {
     const currentTimestamp = Math.floor(Date.now());
-    await manufacturer.createPills(1, "SKU123", currentTimestamp);
-    const secret = await manufacturer.getSecret(1, "SKU123", currentTimestamp);
-    await manufacturer.consumePill(1, "SKU123", currentTimestamp, addr1.address);
+    await manufacturer.createPills("SKU123", currentTimestamp);
+    const secret = await manufacturer.getSecret("SKU123", currentTimestamp);
+    await manufacturer.consumePill("SKU123", currentTimestamp, addr1.address);
     const pillInfo = await manufacturer.viewPillInfo(secret);
     expect(pillInfo[1]).to.equal(1); // status
     expect(pillInfo[2]).to.equal(addr1.address); //consumedBy
@@ -72,13 +71,10 @@ describe("Consumer Contract", function () {
     manufacturer = await Manufacturer.deploy("PharmaCompany");
     await manufacturer.waitForDeployment();
     const manufacturerAddress = await manufacturer.getAddress();
-    // console.log("Manufacturer contract deployed to:", manufacturerAddress);
 
     Consumer = await ethers.getContractFactory("Consumer", owner);
     consumer = await Consumer.deploy(manufacturerAddress);
     await consumer.waitForDeployment();
-    // const consumerAddress = await consumer.getAddress();
-    // console.log("Consumer deployed to:", consumerAddress); 
   });
 
   it("Should deploy smart contract properly", async function () {
@@ -87,12 +83,12 @@ describe("Consumer Contract", function () {
 
   it("Should be able to consume Pills", async function () {
     const currentTimestamp = Math.floor(Date.now());
-    await manufacturer.createPills(1, "SKU123", currentTimestamp);
-    const secret = await manufacturer.getSecret(1, "SKU123", currentTimestamp);
+    await manufacturer.createPills("SKU123", currentTimestamp);
+    const secret = await manufacturer.getSecret("SKU123", currentTimestamp);
     const pillInfoBefore = await manufacturer.viewPillInfo(secret);
     expect(pillInfoBefore[1]).to.equal(0); //status
 
-    await consumer.consumePill(1, "SKU123", currentTimestamp, { value: ethers.parseEther("1") });  
+    await consumer.consumePill("SKU123", currentTimestamp, { value: ethers.parseEther("1") });  
     const pillInfoAfter = await manufacturer.viewPillInfo(secret);
     expect(pillInfoAfter[1]).to.equal(1); //status
 

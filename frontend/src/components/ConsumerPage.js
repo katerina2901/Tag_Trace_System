@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QrScannerWrapper from './QrScannerWrapper'; 
+import axios from 'axios';
 
 function ConsumerPage() {
   const navigate = useNavigate();
@@ -29,9 +30,41 @@ function ConsumerPage() {
       console.log('Scanned URL:', url);
       console.log('Extracted Secret:', secret);
 
-
       if (secret) {
-        navigate(`/consumer/${secret}`);
+        try {
+          // Fetch pill information from the backend
+          const response = await axios.get(`http://localhost:3001/api/pills/${secret}`);
+          const pillInfo = response.data;
+          console.log('Pill Info:', pillInfo);
+
+          // Ensure the necessary fields are present
+          const SKU = pillInfo.SKU;
+          const productionDate = pillInfo.productionDate;
+          
+          if (!SKU || !productionDate) {
+            throw new Error('Incomplete pill information received from backend.');
+          }
+
+          // Log data to be sent to backend
+          console.log('Sending scan data to backend:', {
+            secret,
+            sku: SKU,
+            timestamp: productionDate
+          });
+
+          // Send the scan information to the backend to record the transaction
+          await axios.post('http://localhost:3001/api/pills/scan', {
+            secret,
+            sku: SKU,
+            timestamp: productionDate
+          });
+
+          // Navigate to the consumer page with the pill information
+          navigate(`/consumer/${secret}`);
+        } catch (error) {
+          console.error('Error recording scan:', error);
+          setError('Error recording scan. Please try again.');
+        }
       } else {
         setError('Invalid QR code scanned. Please try again.');
       }
