@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import QrScanner from 'react-qr-scanner';
-//import axios from 'axios';
+import QrScannerWrapper from './QrScannerWrapper'; 
 
 function ConsumerPage() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then((stream) => {
-        setPermissionGranted(true);
-        stream.getTracks().forEach(track => track.stop()); 
-      })
-      .catch((err) => {
-        setError('Error accessing camera: ' + err.message);
-        console.error('Error accessing camera:', err);
-      });
-  }, []);
+    if (showScanner) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          setPermissionGranted(true);
+          stream.getTracks().forEach(track => track.stop()); 
+        })
+        .catch((err) => {
+          setError('Error accessing camera: ' + err.message);
+          console.error('Error accessing camera:', err);
+        });
+    }
+  }, [showScanner]);
 
   const handleScan = async (data) => {
     if (data) {
@@ -27,7 +29,7 @@ function ConsumerPage() {
       console.log('Scanned URL:', url);
       console.log('Extracted Secret:', secret);
 
-      // Перенаправление на страницу информации о таблетке с секретом
+
       if (secret) {
         navigate(`/consumer/${secret}`);
       } else {
@@ -41,22 +43,32 @@ function ConsumerPage() {
     console.error(err);
   };
 
+  const handleCheckPillClick = () => {
+    setShowScanner(true);
+  };
 
+  
   return (
     <div>
       <h1>Consumer Page</h1>
-      {permissionGranted ? (
+      <button onClick={handleCheckPillClick}>Check Pill</button>
+
+      {showScanner && (
         <div>
-          <QrScanner
-            delay={300}
-            onError={handleError}
-            onScan={handleScan}
-            style={{ width: '300px', height: '300px' }}
-          />
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {permissionGranted ? (
+            <div>
+              <QrScannerWrapper
+                delay={300}
+                onError={handleError}
+                onScan={handleScan}
+                style={{ width: '300px', height: '300px' }}
+              />
+              {error && <p style={{ color: 'red' }}>{error}</p>}
+            </div>
+          ) : (
+            <p style={{ color: 'red' }}>{error || 'Waiting for camera permission...'}</p>
+          )}
         </div>
-      ) : (
-        <p style={{ color: 'red' }}>{error || 'Waiting for camera permission...'}</p>
       )}
     </div>
   );
