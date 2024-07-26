@@ -1,88 +1,3 @@
-/* .container {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  
-  .title {
-    font-size: 2em;
-    margin-bottom: 20px;
-  }
-  
-  .button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 10px 0;
-    cursor: pointer;
-    font-size: 1em;
-  }
-  
-  .button:hover {
-    background-color: #0056b3;
-  }
-  
-  .scanner-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-  }
-  
-  .qr-scanner {
-    width: 300px;
-    height: 300px;
-    border: 2px solid #ccc;
-    margin-bottom: 10px;
-  }
-  
-  .error {
-    color: red;
-  }
-  
-  .loading {
-    font-size: 1.5em;
-    margin-top: 20px;
-  }
-  
-  .pill-info-container {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-top: 20px;
-  }
-  
-  .pill-info {
-    text-align: left;
-    max-width: 300px;
-  }
-  
-  .pill-info h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-  }
-  
-  .pill-info p {
-    font-size: 1em;
-    margin: 5px 0;
-  }
-  
-  .pill-info-field {
-    margin: 5px 0;
-  }
-  
-  .pill-bottle-container {
-    text-align: center;
-  }
-  
-  .pill-bottle {
-    max-width: 150px;
-  }
-   */
-
    .container {
     display: flex;
     flex-direction: column;
@@ -118,28 +33,44 @@
   
   .pill-info-container {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
     margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.8); /* Optional: Add a semi-transparent background for readability */
+    padding: 10px;
+    border-radius: 10px;
   }
   
   .pill-info {
     text-align: left;
-    max-width: 200px;
+    max-width: 100%;
+    margin-bottom: 20px;
   }
   
   .pill-info p {
     margin: 5px 0;
   }
   
+  .pill-info-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .pill-bottle-container {
+    text-align: right;
+    margin-left: 250px;
+    margin-top: -250px;
+  }
+  
   .pill-bottle {
-    max-width: 100px;
-    margin-left: 20px;
+    max-width: 400px; 
   }
   
   .button {
-    background-color: #007bff;
+    background-color: #93bcd8; 
     color: white;
     border: none;
     padding: 10px 20px;
@@ -151,14 +82,14 @@
   }
   
   .button:hover {
-    background-color: #0056b3;
+    background-color: #5c8da6; 
   }
   
   .consume-button {
-    background-color: #28a745;
+    background-color: #a4df96; 
+    margin-top: 10px;
   }
   
   .consume-button:hover {
-    background-color: #218838;
+    background-color: #69975b;
   }
-  
