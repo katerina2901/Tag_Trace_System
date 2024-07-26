@@ -2,6 +2,7 @@
 // import { useNavigate } from 'react-router-dom';
 // import QrScannerWrapper from './QrScannerWrapper';
 // import axios from 'axios';
+// import './ConsumerPage.css'; // Import the CSS file
 
 // function ConsumerPage() {
 //   const navigate = useNavigate();
@@ -92,40 +93,59 @@
 //     }
 //   };
 
+//   const formatDate = (unixTimestamp) => {
+//     if (!unixTimestamp || isNaN(unixTimestamp)) {
+//       return 'Invalid Date';
+//     }
+//     const date = new Date((unixTimestamp + 3 * 60 * 60) * 1000); 
+//     return date.toISOString().slice(0, 10); 
+//   };
+
 //   return (
-//     <div>
-//       <h1>Consumer Page</h1>
-//       <button onClick={handleCheckPillClick}>Check Pill</button>
+//     <div className="container">
+//       <h1 className="title">Consumer Page</h1>
+//       <button className="button" onClick={handleCheckPillClick}>Check Pill</button>
 
 //       {showScanner && (
-//         <div>
+//         <div className="scanner-container">
 //           {permissionGranted ? (
-//             <div>
+//             <div className="qr-scanner">
 //               <QrScannerWrapper
 //                 delay={300}
 //                 onError={handleError}
 //                 onScan={handleScan}
 //                 style={{ width: '300px', height: '300px' }}
 //               />
-//               {error && <p style={{ color: 'red' }}>{error}</p>}
+//               {error && <p className="error">{error}</p>}
 //             </div>
 //           ) : (
-//             <p style={{ color: 'red' }}>{error || 'Waiting for camera permission...'}</p>
+//             <p className="error">{error || 'Waiting for camera permission...'}</p>
 //           )}
 //         </div>
 //       )}
 
-//       {isLoading && <p>Loading...</p>}
+//       {isLoading && <p className="loading">Loading...</p>}
 
 //       {pillInfo && (
-//         <div>
-//           <h2>Pill Info:</h2>
-//           <p><strong>SKU:</strong> {pillInfo.SKU}</p>
-//           <p><strong>blockchainManufacturer:</strong> {pillInfo.blockchainManufacturer}</p>
-//           <p><strong>clickhouseManufacturer:</strong> {pillInfo.clickhouseManufacturer}</p>
-//           <p><strong>productionDate:</strong> {pillInfo.productionDate}</p>
-//           <p><strong>status:</strong> {pillInfo.status}</p>
-//           <button onClick={handleConsumePill}>Consume Pill</button>
+//         <div className="pill-info-container">
+//           <div className="pill-info">
+//             <div className="pill-info-field">
+//               <strong>Manufacturer (address):</strong> {pillInfo.blockchainManufacturer}
+//             </div>
+//             <div className="pill-info-field">
+//               <strong>Manufacturer name:</strong> {pillInfo.clickhouseManufacturer}
+//             </div>
+//             <div className="pill-info-field">
+//               <strong>Production Date:</strong> {formatDate(pillInfo.productionDate)}
+//             </div>
+//             <div className="pill-info-field">
+//               <strong>Status:</strong> {pillInfo.status === 0 ? 'Not consumed' : 'Consumed'}
+//             </div>
+//             <button className="button" onClick={handleConsumePill}>Consume Pill</button>
+//           </div>
+//           <div className="pill-bottle-container">
+//             <img src="/path/to/your/pill-bottle-image.png" alt="Pill Bottle" className="pill-bottle" />
+//           </div>
 //         </div>
 //       )}
 //     </div>
@@ -138,6 +158,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QrScannerWrapper from './QrScannerWrapper';
 import axios from 'axios';
+import './ConsumerPage.css'; // Import the CSS file
 
 function ConsumerPage() {
   const navigate = useNavigate();
@@ -175,9 +196,14 @@ function ConsumerPage() {
     if (secret) {
       try {
         const response = await axios.get(`http://localhost:3001/api/pills/${secret}`);
-        setPillInfo(response.data);
-        console.log('Pill Info:', response.data);
+        const pillData = response.data;
+        setPillInfo(pillData);
+        console.log('Pill Info:', pillData);
         setError('');
+
+        if (pillData.status === 1) {
+          navigate(`/consumer/${secret}`);
+        }
       } catch (error) {
         console.error('Error fetching pill info:', error);
         setError('Error fetching pill info. Please try again.');
@@ -237,38 +263,44 @@ function ConsumerPage() {
   };
 
   return (
-    <div>
-      <h1>Consumer Page</h1>
-      <button onClick={handleCheckPillClick}>Check Pill</button>
+    <div className="container">
+      <h1 className="title">Consumer Page</h1>
+      <button className="button" onClick={handleCheckPillClick}>Check Pill</button>
 
       {showScanner && (
-        <div>
+        <div className="scanner-container">
           {permissionGranted ? (
-            <div>
+            <div className="qr-scanner">
               <QrScannerWrapper
                 delay={300}
                 onError={handleError}
                 onScan={handleScan}
                 style={{ width: '300px', height: '300px' }}
               />
-              {error && <p style={{ color: 'red' }}>{error}</p>}
+              {error && <p className="error">{error}</p>}
             </div>
           ) : (
-            <p style={{ color: 'red' }}>{error || 'Waiting for camera permission...'}</p>
+            <p className="error">{error || 'Waiting for camera permission...'}</p>
           )}
         </div>
       )}
 
-      {isLoading && <p>Loading...</p>}
+      {isLoading && <p className="loading">Loading...</p>}
 
       {pillInfo && (
-        <div>
-          <h2>Pill Info:</h2>
-          <p><strong>Manufacturer (address):</strong> {pillInfo.blockchainManufacturer}</p>
-          <p><strong>Manufacturer name:</strong> {pillInfo.clickhouseManufacturer}</p>
-          <p><strong>Production Date:</strong> {formatDate(pillInfo.productionDate)}</p>
-          <p><strong>Status:</strong> {pillInfo.status === 0 ? 'Not consumed' : 'Consumed'}</p>
-          <button onClick={handleConsumePill}>Consume Pill</button>
+        <div className="pill-info-container">
+          <div className="pill-info">
+            <p><strong>Manufacturer (address):</strong> {pillInfo.blockchainManufacturer}</p>
+            <p><strong>Manufacturer name:</strong> {pillInfo.clickhouseManufacturer}</p>
+            <p><strong>Production Date:</strong> {formatDate(pillInfo.productionDate)}</p>
+            <p><strong>Status:</strong> {pillInfo.status === 0 ? 'Not consumed' : 'Consumed'}</p>
+          </div>
+          <div className="pill-bottle-container">
+            <img src="/path/to/your/pill-bottle-image.png" alt="Pill Bottle" className="pill-bottle" />
+          </div>
+          {pillInfo.status === 0 && (
+            <button className="button consume-button" onClick={handleConsumePill}>Consume Pill</button>
+          )}
         </div>
       )}
     </div>
